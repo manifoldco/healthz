@@ -54,7 +54,7 @@ endif
 ifndef VERSION
 	$(error You need to specify the version you want to tag)
 endif
-	git commit -m "Tagging v$(VERSION)"
+	git commit --allow-empty -m "Tagging v$(VERSION)"
 	git tag v$(VERSION)
 	git push
 	git push --tags
