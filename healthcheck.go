@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
-	"github.com/go-openapi/strfmt"
 )
 
 // Prefix represents the prefix for the health check endpoint.
@@ -45,7 +43,7 @@ var (
 // HealthCheck represents the overal health check status of the health check
 // request.
 type HealthCheck struct {
-	CheckedAt  strfmt.DateTime `json:"checked_at"`
+	CheckedAt  time.Time       `json:"checked_at"`
 	DurationMs time.Duration   `json:"duration_ms"`
 	Result     Result          `json:"result"`
 	Tests      map[string]Test `json:"tests"`
@@ -96,7 +94,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	hc := HealthCheck{
-		CheckedAt: strfmt.DateTime(time.Now()),
+		CheckedAt: time.Now(),
 		Tests:     map[string]Test{},
 		Result:    Success,
 	}
