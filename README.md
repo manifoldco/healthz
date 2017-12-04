@@ -24,12 +24,12 @@ as follows:
 
 ```go
 func init() {
-    healthz.RegisterTest("jwt-key", jwtCheck)
+	healthz.RegisterTest("jwt-key", jwtCheck)
 }
 
 func jwtCheck(ctx context.Context) error {
 	_, err := os.Stat("/jwt/ecdsa-private.pem")
-    return err
+	return err
 }
 ```
 
