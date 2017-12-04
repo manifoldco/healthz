@@ -1,12 +1,12 @@
-# HealthCheck
+# Healthz
 
 [Code of Conduct](./.github/CODE_OF_CONDUCT.md) |
 [Contribution Guidelines](./.github/CONTRIBUTING.md)
 
-[![GitHub release](https://img.shields.io/github/tag/manifoldco/go-healthcheck.svg?label=latest)](https://github.com/manifoldco/go-healthcheck/releases)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/manifoldco/go-healthcheck)
-[![Travis](https://img.shields.io/travis/manifoldco/go-healthcheck/master.svg)](https://travis-ci.org/manifoldco/go-healthcheck)
-[![Go Report Card](https://goreportcard.com/badge/github.com/manifoldco/go-healthcheck)](https://goreportcard.com/report/github.com/manifoldco/go-healthcheck)
+[![GitHub release](https://img.shields.io/github/tag/manifoldco/healthz.svg?label=latest)](https://github.com/manifoldco/healthz/releases)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/manifoldco/healthz)
+[![Travis](https://img.shields.io/travis/manifoldco/healthz/master.svg)](https://travis-ci.org/manifoldco/healthz)
+[![Go Report Card](https://goreportcard.com/badge/github.com/manifoldco/healthz)](https://goreportcard.com/report/github.com/manifoldco/healthz)
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](./LICENSE.md)
 
 This is a package that allows you to set up health checks for your services. By
@@ -24,7 +24,7 @@ as follows:
 
 ```go
 func init() {
-    healthcheck.RegisterTest("jwt-key", jwtCheck)
+    healthz.RegisterTest("jwt-key", jwtCheck)
 }
 
 func jwtCheck(ctx context.Context) error {
