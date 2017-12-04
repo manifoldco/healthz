@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0] - 2017-12-04
+
+### Added
+
+- Renamed the package to `healthz`
+
 ## [0.0.1] - 2017-11-27
 
 ### Added
