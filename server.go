@@ -54,7 +54,7 @@ func (s *Server) RegisterLogger(l Logger) {
 
 // Start starts the health check server. This returns an error when listening or
 // serving the requests causes an error. Otherwise this will be blocking.
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start() error {
 	s.logger.Printf("Healthcheck listening on http://%s", s.srv.Addr)
 
 	if err := s.srv.ListenAndServe(); err != nil {
