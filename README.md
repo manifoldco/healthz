@@ -33,6 +33,77 @@ func jwtCheck(ctx context.Context) error {
 }
 ```
 
+## Attaching the endpoints to an existing server
+
+If you have an existing server running, you can attach the `/_healthz` endpoint
+to it without having to start a separate server.
+
+```go
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	handler := healthz.NewHandler(mux)
+	http.ListenAndServe(":3000", handler)
+}
+```
+
+This will create a new mux which listens to the `/hello` request. We then attach
+the healthcheck handler by using `healthz.NewHandler(mux)`.
+
+
+## Creating a standalone server
+
+When your application isn't a web server, but you still want to add health
+checks, you can use the provided server implementation.
+
+```go
+func main() {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	srv := healthz.NewServer("0.0.0.0", 3000)
+	go srv.Start()
+
+	<-stop
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	srv.Shutdown(ctx)
+}
+```
+
+## Using middleware
+
+With both the `NewHandler` and `NewServer` implementation, we've provided a way
+to add middleware. This allows you to add logging to your health checks for
+example.
+
+The middleware functions are respectively `NewHandlerWithMiddleware` and
+`NewServerWithMiddleware`. They accept the arguments of their parent function
+but also a set of middlewares as variadic arguments.
+
+```go
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	handler := healthz.NewHandlerWithMiddleware(mux, logMiddleware)
+	http.ListenAndServe(":3000", handler)
+}
+
+func logMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Print("start request")
+		next.ServeHTTP(w, r)
+		log.Print("end request")
+	})
+}
+```
+
 ## Output
 
 On the health check endpoint, we return a set of values useful to us. Extending
