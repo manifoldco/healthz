@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [1.0.0] - 2017-12-04
+## [1.0.0] - 2017-12-05
 
 ### Added
 
 - Renamed the package to `healthz`
+
+### Changed
+
+- `Server.Start()` doesn't take a `context.Context` anymore.
 
 ## [0.0.1] - 2017-11-27
 
