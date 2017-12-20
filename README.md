@@ -147,3 +147,31 @@ present, one where it isn't).
   }
 }
 ```
+
+## Middlewares
+
+We've included a set of standard middlewares that can be useful for general use.
+
+### Cache
+
+The cache middleware allows you to cache a response for a specific duration.
+This prevents the health check to overload due to different sources asking for
+the health status. This is especially useful when the health checks are used to
+check the health of other services as well.
+
+To use this middleware, simply add it to the chain:
+
+```go
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	handler := healthz.NewHandlerWithMiddleware(
+		mux,
+		healthz.CacheMiddleware(5*time.Second),
+	)
+	http.ListenAndServe(":3000", handler)
+}
+```
