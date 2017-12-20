@@ -30,7 +30,7 @@ func NewServer(host string, port int) *Server {
 // middleware to the created `_healthz` endpoint. It is up to the user to call
 // `Server.Shutdown` once the service is shutting down to terminate the server
 // gracefully.
-func NewServerWithMiddleware(host string, port int, mw ...middlewareFunc) *Server {
+func NewServerWithMiddleware(host string, port int, mw ...MiddlewareFunc) *Server {
 	handler := NewHandlerWithMiddleware(http.NewServeMux(), mw...)
 
 	addr := host + ":" + strconv.Itoa(port)
