@@ -5,7 +5,7 @@
 
 [![GitHub release](https://img.shields.io/github/tag/manifoldco/healthz.svg?label=latest)](https://github.com/manifoldco/healthz/releases)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/manifoldco/healthz)
-[![Travis](https://img.shields.io/travis/manifoldco/healthz/master.svg)](https://travis-ci.org/manifoldco/healthz)
+[![Build Status](https://travis-ci.org/manifoldco/healthz.svg?branch=master)](https://travis-ci.org/manifoldco/healthz)
 [![Go Report Card](https://goreportcard.com/badge/github.com/manifoldco/healthz)](https://goreportcard.com/report/github.com/manifoldco/healthz)
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](./LICENSE.md)
 
