@@ -7,7 +7,7 @@ LINTERS=\
 	ineffassign \
 	deadcode
 
-ci: $(LINTERS) test
+ci: $(LINTERS) test benchmark
 
 .PHONY: ci
 
@@ -31,15 +31,19 @@ vendor:
 # Test and linting
 #################################################
 
-test: vendor $(GENERATED_NAMING_FILES)
-	@CGO_ENABLED=0 go test -v $$(go list ./... | grep -v vendor)
+test: vendor
+	@CGO_ENABLED=0 go test -v
+
+# Make sure ulimit is high enough. This might cause issues otherwise.
+benchmark: vendor
+	@CGO_ENABLED=0 go test -v -run=XXX -bench=.
 
 lint: vendor $(LINTERS)
 
 METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
 	 ./... --enable
 
-$(LINTERS): vendor $(GENERATED_NAMING_FILES)
+$(LINTERS): vendor
 	$(METALINT) $@
 
 .PHONY: $(LINTERS) test
