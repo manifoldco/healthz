@@ -15,7 +15,8 @@ var Endpoint = "/_healthz"
 
 var healthCheckTests = map[string]TestFunc{}
 
-type middlewareFunc func(http.Handler) http.Handler
+// MiddlewareFunc represents a function that acts as middleware.
+type MiddlewareFunc func(http.Handler) http.Handler
 
 // TestFunc represents a function which will be executed when we run the health
 // check endpoint.
@@ -64,7 +65,7 @@ func NewHandler(dh http.Handler) http.Handler {
 
 // NewHandlerWithMiddleware wraps the given handler with a new health endpoint.
 // This health endpoint will be wrapped in the provided middleware.
-func NewHandlerWithMiddleware(dh http.Handler, mw ...middlewareFunc) http.Handler {
+func NewHandlerWithMiddleware(dh http.Handler, mw ...MiddlewareFunc) http.Handler {
 	var handler http.Handler
 	h := http.NewServeMux()
 
