@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Integrated the Degraded status
+
+### Changed
+
+- Renamed Result to Status and renamed the values to clearer verbs
+- Changed the interface of the TestFunc to include the Status
+
 ## [1.1.0] - 2018-01-03
 
 ### Added
