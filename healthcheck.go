@@ -20,7 +20,7 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // TestFunc represents a function which will be executed when we run the health
 // check endpoint.
-type TestFunc func(context.Context) error
+type TestFunc func(context.Context) (Status, error)
 
 // Error represents a health check error
 type Error string
@@ -30,15 +30,18 @@ func (e Error) Error() string {
 	return string(e)
 }
 
-// Result represent the state of a TestFunc
-type Result string
+// Status represents the state of a TestFunc
+type Status string
 
 var (
-	// Success represents the success result state
-	Success Result = "success"
+	// Available represents the success result state
+	Available Status = "available"
 
-	// Failure represents the failure result state
-	Failure Result = "failure"
+	// Degraded represents a degraded result state
+	Degraded Status = "degraded"
+
+	// Unavailable represents the failure result state
+	Unavailable Status = "unavailable"
 )
 
 // HealthCheck represents the overal health check status of the health check
@@ -46,7 +49,7 @@ var (
 type HealthCheck struct {
 	CheckedAt  time.Time       `json:"checked_at"`
 	DurationMs time.Duration   `json:"duration_ms"`
-	Result     Result          `json:"result"`
+	Status     Status          `json:"status"`
 	Tests      map[string]Test `json:"tests"`
 }
 
@@ -54,7 +57,7 @@ type HealthCheck struct {
 // form the actual HealthCheck.
 type Test struct {
 	DurationMs time.Duration `json:"duration_ms"`
-	Result     Result        `json:"result"`
+	Status     Status        `json:"status"`
 	Error      Error         `json:"error,omitempty"`
 }
 
@@ -97,33 +100,34 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	hc := HealthCheck{
 		CheckedAt: time.Now(),
 		Tests:     map[string]Test{},
-		Result:    Success,
+		Status:    Available,
 	}
 
-	success := true
+	statuses := []Status{}
 	ctx := r.Context()
 	for name, test := range healthCheckTests {
 		hct := Test{
-			Result: Success,
+			Status: Available,
 		}
 
 		tStart := time.Now()
-
-		if err := test(ctx); err != nil {
-			success = false
-			hct.Result = Failure
+		testStatus, err := test(ctx)
+		if err != nil {
+			hct.Status = testStatus
 			hct.Error = Error(err.Error())
 		}
 
+		statuses = append(statuses, testStatus)
 		hct.DurationMs = time.Since(tStart) / time.Millisecond
 		hc.Tests[name] = hct
 	}
 
-	if success {
-		w.WriteHeader(http.StatusOK)
-	} else {
-		hc.Result = Failure
+	hc.Status = getOverallStatus(statuses)
+	switch hc.Status {
+	case Unavailable:
 		w.WriteHeader(http.StatusServiceUnavailable)
+	default:
+		w.WriteHeader(http.StatusOK)
 	}
 
 	hc.DurationMs = time.Since(start) / time.Millisecond
@@ -132,8 +136,23 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func defaultCheck(ctx context.Context) error {
-	return nil
+func getOverallStatus(statuses []Status) Status {
+	status := Available
+	for _, s := range statuses {
+		if s == Unavailable {
+			return s
+		}
+
+		if s == Degraded {
+			status = Degraded
+		}
+	}
+
+	return status
+}
+
+func defaultCheck(ctx context.Context) (Status, error) {
+	return Available, nil
 }
 
 func init() {
