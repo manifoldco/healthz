@@ -7,11 +7,21 @@ import (
 	"time"
 )
 
-// Prefix represents the prefix for the health check endpoint.
-var Prefix = ""
+var (
+	// Prefix represents the prefix for the health check endpoint.
+	Prefix = ""
 
-// Endpoint represents the endpoint we'll run the health check endpoint on
-var Endpoint = "/_healthz"
+	// Endpoint represents the endpoint we'll run the health check endpoint on
+	Endpoint = "/_healthz"
+
+	// Timeout represents the duration after which the health check will timeout
+	// and respond with a 503 Service Unavailable.
+	Timeout = 5 * time.Second
+
+	// ErrTimeout is used to attach to a test when the test took longer than the
+	// time specified in Timeout.
+	ErrTimeout = Error("test took too long")
+)
 
 var healthCheckTests = map[string]TestFunc{}
 
@@ -104,9 +114,11 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		Status:    Available,
 	}
 
+	ctx, cancel := context.WithDeadline(r.Context(), time.Now().Add(Timeout))
+	defer cancel()
+
 	rspChan := make(chan Test, len(healthCheckTests))
 	statuses := []Status{}
-	ctx := r.Context()
 	for name, test := range healthCheckTests {
 		go runTest(ctx, name, test, rspChan)
 	}
@@ -116,6 +128,23 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		case rsp := <-rspChan:
 			statuses = append(statuses, rsp.Status)
 			hc.Tests[rsp.Name] = rsp
+		case <-ctx.Done():
+			w.WriteHeader(http.StatusServiceUnavailable)
+			hc.Status = Unavailable
+
+			for name := range healthCheckTests {
+				if _, ok := hc.Tests[name]; !ok {
+					hc.Tests[name] = Test{
+						Name:       name,
+						Status:     Unavailable,
+						Error:      ErrTimeout,
+						DurationMs: Timeout / time.Millisecond,
+					}
+				}
+			}
+
+			handleResponse(w, hc, start)
+			return
 		}
 	}
 
@@ -127,6 +156,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 
+	handleResponse(w, hc, start)
+}
+
+func handleResponse(w http.ResponseWriter, hc HealthCheck, start time.Time) {
 	hc.DurationMs = time.Since(start) / time.Millisecond
 	if err := json.NewEncoder(w).Encode(hc); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
