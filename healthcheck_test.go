@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
@@ -27,6 +28,43 @@ func TestHealthChecks_Default(t *testing.T) {
 }
 
 func TestHealthChecks_Custom(t *testing.T) {
+	t.Run("with multiple tests", func(t *testing.T) {
+		defer resetTests()
+
+		executedTests := 0
+		var l sync.Mutex
+		tstFuncFail := func(_ context.Context) (Status, error) {
+			l.Lock()
+			defer l.Unlock()
+			executedTests++
+			return Unavailable, errors.New("unavailable")
+		}
+		tstFuncSuccess := func(_ context.Context) (Status, error) {
+			l.Lock()
+			defer l.Unlock()
+			executedTests++
+			return Available, nil
+		}
+		RegisterTest("custom-failure1", tstFuncFail)
+		RegisterTest("custom-success1", tstFuncSuccess)
+		RegisterTest("custom-failure2", tstFuncFail)
+		RegisterTest("custom-success2", tstFuncSuccess)
+
+		hc, _, err := getHealth()
+		if err != nil {
+			t.Fatalf("Expected no error, got '%s'", err.Error())
+		}
+
+		// account for default test
+		if ln := len(hc.Tests); ln != 5 {
+			t.Fatalf("Expected '%d' tests, got '%d'", 5, ln)
+		}
+
+		if executedTests != 4 {
+			t.Fatalf("Expected '%d' tests to be executed, got '%d'", 4, executedTests)
+		}
+	})
+
 	t.Run("with a failing test", func(t *testing.T) {
 		defer resetTests()
 

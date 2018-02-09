@@ -56,6 +56,7 @@ type HealthCheck struct {
 // Test represents a single health check test. All the tests combined
 // form the actual HealthCheck.
 type Test struct {
+	Name       string        `json:"name"`
 	DurationMs time.Duration `json:"duration_ms"`
 	Status     Status        `json:"status"`
 	Error      Error         `json:"error,omitempty"`
@@ -103,23 +104,19 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		Status:    Available,
 	}
 
+	rspChan := make(chan Test, len(healthCheckTests))
 	statuses := []Status{}
 	ctx := r.Context()
 	for name, test := range healthCheckTests {
-		hct := Test{
-			Status: Available,
-		}
+		go runTest(ctx, name, test, rspChan)
+	}
 
-		tStart := time.Now()
-		testStatus, err := test(ctx)
-		if err != nil {
-			hct.Status = testStatus
-			hct.Error = Error(err.Error())
+	for i := 0; i < len(healthCheckTests); i++ {
+		select {
+		case rsp := <-rspChan:
+			statuses = append(statuses, rsp.Status)
+			hc.Tests[rsp.Name] = rsp
 		}
-
-		statuses = append(statuses, testStatus)
-		hct.DurationMs = time.Since(tStart) / time.Millisecond
-		hc.Tests[name] = hct
 	}
 
 	hc.Status = getOverallStatus(statuses)
@@ -134,6 +131,24 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(hc); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func runTest(ctx context.Context, name string, test TestFunc, rspChan chan Test) {
+	hct := Test{
+		Name:   name,
+		Status: Available,
+	}
+
+	tStart := time.Now()
+	testStatus, err := test(ctx)
+	if err != nil {
+		hct.Error = Error(err.Error())
+	}
+
+	hct.Status = testStatus
+	hct.DurationMs = time.Since(tStart) / time.Millisecond
+
+	rspChan <- hct
 }
 
 func getOverallStatus(statuses []Status) Status {
