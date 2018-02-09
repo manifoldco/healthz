@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Integrated the Degraded status
+- Set up a global Timeout to run the health check tests in
 
 ### Changed
 
 - Renamed Result to Status and renamed the values to clearer verbs
 - Changed the interface of the TestFunc to include the Status
+- Tests will now run concurrently instead of sequentially
 
 ## [1.1.0] - 2018-01-03
 

@@ -7,11 +7,21 @@ import (
 	"time"
 )
 
-// Prefix represents the prefix for the health check endpoint.
-var Prefix = ""
+var (
+	// Prefix represents the prefix for the health check endpoint.
+	Prefix = ""
 
-// Endpoint represents the endpoint we'll run the health check endpoint on
-var Endpoint = "/_healthz"
+	// Endpoint represents the endpoint we'll run the health check endpoint on
+	Endpoint = "/_healthz"
+
+	// Timeout represents the duration after which the health check will timeout
+	// and respond with a 503 Service Unavailable.
+	Timeout = 5 * time.Second
+
+	// ErrTimeout is used to attach to a test when the test took longer than the
+	// time specified in Timeout.
+	ErrTimeout = Error("test took too long")
+)
 
 var healthCheckTests = map[string]TestFunc{}
 
@@ -56,6 +66,7 @@ type HealthCheck struct {
 // Test represents a single health check test. All the tests combined
 // form the actual HealthCheck.
 type Test struct {
+	Name       string        `json:"name"`
 	DurationMs time.Duration `json:"duration_ms"`
 	Status     Status        `json:"status"`
 	Error      Error         `json:"error,omitempty"`
@@ -103,23 +114,38 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		Status:    Available,
 	}
 
+	ctx, cancel := context.WithDeadline(r.Context(), time.Now().Add(Timeout))
+	defer cancel()
+
+	rspChan := make(chan Test, len(healthCheckTests))
 	statuses := []Status{}
-	ctx := r.Context()
 	for name, test := range healthCheckTests {
-		hct := Test{
-			Status: Available,
-		}
+		go runTest(ctx, name, test, rspChan)
+	}
 
-		tStart := time.Now()
-		testStatus, err := test(ctx)
-		if err != nil {
-			hct.Status = testStatus
-			hct.Error = Error(err.Error())
-		}
+	for i := 0; i < len(healthCheckTests); i++ {
+		select {
+		case rsp := <-rspChan:
+			statuses = append(statuses, rsp.Status)
+			hc.Tests[rsp.Name] = rsp
+		case <-ctx.Done():
+			w.WriteHeader(http.StatusServiceUnavailable)
+			hc.Status = Unavailable
 
-		statuses = append(statuses, testStatus)
-		hct.DurationMs = time.Since(tStart) / time.Millisecond
-		hc.Tests[name] = hct
+			for name := range healthCheckTests {
+				if _, ok := hc.Tests[name]; !ok {
+					hc.Tests[name] = Test{
+						Name:       name,
+						Status:     Unavailable,
+						Error:      ErrTimeout,
+						DurationMs: Timeout / time.Millisecond,
+					}
+				}
+			}
+
+			handleResponse(w, hc, start)
+			return
+		}
 	}
 
 	hc.Status = getOverallStatus(statuses)
@@ -130,10 +156,32 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 
+	handleResponse(w, hc, start)
+}
+
+func handleResponse(w http.ResponseWriter, hc HealthCheck, start time.Time) {
 	hc.DurationMs = time.Since(start) / time.Millisecond
 	if err := json.NewEncoder(w).Encode(hc); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func runTest(ctx context.Context, name string, test TestFunc, rspChan chan Test) {
+	hct := Test{
+		Name:   name,
+		Status: Available,
+	}
+
+	tStart := time.Now()
+	testStatus, err := test(ctx)
+	if err != nil {
+		hct.Error = Error(err.Error())
+	}
+
+	hct.Status = testStatus
+	hct.DurationMs = time.Since(tStart) / time.Millisecond
+
+	rspChan <- hct
 }
 
 func getOverallStatus(statuses []Status) Status {
