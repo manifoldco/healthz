@@ -1,8 +1,6 @@
 language: go
 go:
-- 1.8.x
-- 1.9.x
+- 1.11.x
 branches:
   only:
   - master
-install: make bootstrap
