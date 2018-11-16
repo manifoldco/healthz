@@ -1,63 +1,55 @@
-LINTERS=\
+LINTERS=$(shell grep "// lint" tools.go | awk '{gsub(/\"/, "", $$1); print $$1}' | awk -F / '{print $$NF}') \
 	gofmt \
-	golint \
-	gosimple \
-	vet \
-	misspell \
-	ineffassign \
-	deadcode
+	vet
 
 ci: $(LINTERS) test benchmark
 
 .PHONY: ci
 
 #################################################
-# Bootstrapping for base golang package deps
+# Bootstrapping for base golang package and tool deps
 #################################################
 
-BOOTSTRAP=\
-	github.com/alecthomas/gometalinter
+CMD_PKGS=$(shell grep '	"' tools.go | awk -F '"' '{print $$2}')
 
-$(BOOTSTRAP):
-	go get -u $@
-bootstrap: $(BOOTSTRAP)
-	gometalinter --install
+define VENDOR_BIN_TMPL
+vendor/bin/$(notdir $(1)): vendor/$(1) | vendor
+	go build -a -o $$@ ./vendor/$(1)
+VENDOR_BINS += vendor/bin/$(notdir $(1))
+vendor/$(1): go.sum
+	GO111MODULE=on go mod vendor
+endef
 
-vendor:
+$(foreach cmd_pkg,$(CMD_PKGS),$(eval $(call VENDOR_BIN_TMPL,$(cmd_pkg))))
 
-.PHONY: bootstrap $(BOOTSTRAP)
+$(patsubst %,%-bin,$(filter-out gofmt vet,$(LINTERS))): %-bin: vendor/bin/%
+gofmt-bin vet-bin:
+
+vendor: go.sum
+	GO111MODULE=on go mod vendor
+
+mod-update:
+	GO111MODULE=on go get -u -m
+	GO111MODULE=on go mod tidy
+
+mod-tidy:
+	GO111MODULE=on go mod tidy
+
+.PHONY: $(CMD_PKGS)
+.PHONY: mod-update mod-tidy
 
 #################################################
 # Test and linting
 #################################################
 
 test: vendor
-	@CGO_ENABLED=0 go test -v
+	@$(TEST_ENV) CGO_ENABLED=0 go test $$(go list ./... | grep -v generated)
 
-# Make sure ulimit is high enough. This might cause issues otherwise.
+$(LINTERS): %: vendor/bin/gometalinter %-bin vendor
+	PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
+		--deadline=5m -s data --skip generated --enable $@ ./...
+
 benchmark: vendor
-	@CGO_ENABLED=0 go test -v -run=XXX -bench=.
+       @CGO_ENABLED=0 go test -v -run=XXX -bench=.
 
-lint: vendor $(LINTERS)
-
-METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
-	 ./... --enable
-
-$(LINTERS): vendor
-	$(METALINT) $@
-
-.PHONY: $(LINTERS) test
-
-release:
-ifneq ($(shell git rev-parse --abbrev-ref HEAD),master)
-	$(error You are not on the master branch)
-endif
-ifneq ($(shell git status --porcelain),)
-	$(error You have uncommitted changes on your branch)
-endif
-ifndef VERSION
-	$(error You need to specify the version you want to tag)
-endif
-	git tag v$(VERSION)
-	git push
-	git push --tags
+.PHONY: $(LINTERS) test benchmark
