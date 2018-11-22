@@ -68,7 +68,11 @@ func (s *Server) Start() error {
 // Shutdown gracefully shuts down the health check server.
 func (s *Server) Shutdown(ctx context.Context) {
 	s.logger.Printf("Shutting down health server")
-	s.srv.Shutdown(ctx)
+
+	if err := s.srv.Shutdown(ctx); err != nil {
+		s.logger.Fatalf("Error shutting down: %s", err)
+	}
+
 	s.logger.Printf("Health server shut down")
 }
 
