@@ -1,25 +1,31 @@
 module github.com/manifoldco/healthz
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/alecthomas/gometalinter v2.0.11+incompatible
-	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/client9/misspell v0.3.4
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3
-	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
-	github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/gogo/protobuf v1.2.0 // indirect
+	github.com/golang/mock v1.2.0 // indirect
+	github.com/golangci/gocyclo v0.0.0-20180528144436-0a533e8fa43d // indirect
+	github.com/golangci/golangci-lint v1.12.3
+	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
+	github.com/golangci/tools v0.0.0-20181110070903-2cefd77fef9b // indirect
+	github.com/golangci/unparam v0.0.0-20180902115109-7ad9dbcccc16 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/nicksnyder/go-i18n v1.10.0 // indirect
-	github.com/pelletier/go-toml v1.2.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/testify v1.2.2 // indirect
-	github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9
-	golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
-	golang.org/x/tools v0.0.0-20181115194243-f87c222f1487 // indirect
-	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20171010053543-63abe20a23e2 // indirect
+	github.com/mattn/go-isatty v0.0.4 // indirect
+	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d // indirect
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/shurcooL/go v0.0.0-20181215222900-0143a8f55f04 // indirect
+	github.com/sirupsen/logrus v1.2.0 // indirect
+	github.com/spf13/afero v1.2.0 // indirect
+	github.com/spf13/cobra v0.0.3 // indirect
+	github.com/spf13/viper v1.3.1 // indirect
+	golang.org/x/net v0.0.0-20181217023233-e147a9138326 // indirect
+	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
+	golang.org/x/sys v0.0.0-20181218192612-074acd46bca6 // indirect
+	golang.org/x/tools v0.0.0-20181218204010-d4971274fe38 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
+	sourcegraph.com/sourcegraph/go-diff v0.5.0 // indirect
+	sourcegraph.com/sqs/pbtypes v1.0.0 // indirect
 )
 
 // This version of kingpin is incompatible with the released version of

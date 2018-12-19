@@ -1,8 +1,4 @@
-LINTERS=$(shell grep "// lint" tools.go | awk '{gsub(/\"/, "", $$1); print $$1}' | awk -F / '{print $$NF}') \
-	gofmt \
-	vet
-
-ci: $(LINTERS) test benchmark
+ci: lint test benchmark
 
 .PHONY: ci
 
@@ -35,6 +31,9 @@ mod-update:
 mod-tidy:
 	GO111MODULE=on go mod tidy
 
+clean:
+	go mod -n -modcache
+
 .PHONY: $(CMD_PKGS)
 .PHONY: mod-update mod-tidy
 
@@ -45,11 +44,16 @@ mod-tidy:
 test: vendor
 	@$(TEST_ENV) CGO_ENABLED=0 go test $$(go list ./... | grep -v generated)
 
-$(LINTERS): %: vendor/bin/gometalinter %-bin vendor
-	PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
-		--deadline=5m -s data --skip generated --enable $@ ./...
+.golangci.gen.yml: .golangci.yml
+	$(shell awk '/enable:/{y=1;next} y == 0 {print}' $< > $@)
+
+LINTERS=$(filter-out megacheck,$(shell awk '/enable:/{y=1;next} y != 0 {print $$2}' .golangci.yml))
+
+lint: vendor/bin/golangci-lint vendor .golangci.gen.yml
+	$< run -c .golangci.gen.yml $(LINTERS:%=-E %) ./...
+	$< run -c .golangci.gen.yml -E megacheck ./...
 
 benchmark: vendor
        @CGO_ENABLED=0 go test -v -run=XXX -bench=.
 
-.PHONY: $(LINTERS) test benchmark
+.PHONY: lint test benchmark
