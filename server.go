@@ -57,7 +57,8 @@ func (s *Server) RegisterLogger(l Logger) {
 func (s *Server) Start() error {
 	s.logger.Printf("Healthcheck listening on http://%s", s.srv.Addr)
 
-	if err := s.srv.ListenAndServe(); err != nil {
+	// report the error if it's not a ServerClosed error, which we can tolerate
+	if err := s.srv.ListenAndServe(); err != nil && err != ErrServerClosed {
 		s.logger.Fatalf(err.Error())
 		return err
 	}
