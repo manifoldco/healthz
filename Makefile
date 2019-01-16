@@ -2,7 +2,7 @@ LINTERS=$(shell grep "// lint" tools.go | awk '{gsub(/\"/, "", $$1); print $$1}'
 	gofmt \
 	vet
 
-ci: $(LINTERS) test benchmark
+ci: $(LINTERS) cover benchmark
 
 .PHONY: ci
 
@@ -52,4 +52,7 @@ $(LINTERS): %: vendor/bin/gometalinter %-bin vendor
 benchmark: vendor
        @CGO_ENABLED=0 go test -v -run=XXX -bench=.
 
-.PHONY: $(LINTERS) test benchmark
+cover: vendor
+	@CGO_ENABLED=0 go test -v -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v vendor)
+
+.PHONY: $(LINTERS) test cover benchmark

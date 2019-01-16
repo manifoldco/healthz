@@ -25,3 +25,6 @@ _testmain.go
 
 # used only for running gometalinter
 vendor
+
+# coverage report
+coverage.txt
