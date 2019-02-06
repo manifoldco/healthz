@@ -58,7 +58,7 @@ func (s *Server) Start() error {
 	s.logger.Printf("Healthcheck listening on http://%s", s.srv.Addr)
 
 	// report the error if it's not a ServerClosed error, which we can tolerate
-	if err := s.srv.ListenAndServe(); err != nil && err != ErrServerClosed {
+	if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		s.logger.Fatalf(err.Error())
 		return err
 	}
