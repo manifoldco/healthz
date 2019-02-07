@@ -70,7 +70,7 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) {
 	s.logger.Printf("Shutting down health server")
 
-	if err := s.srv.Shutdown(ctx); err != nil {
+	if err := s.srv.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
 		s.logger.Fatalf("Error shutting down: %s", err)
 	}
 
