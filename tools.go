@@ -7,5 +7,5 @@ import (
 	"github.com/client9/misspell/cmd/misspell" // lint
 	"github.com/gordonklaus/ineffassign"       // lint
 	"github.com/tsenart/deadcode"              // lint
-	"golang.org/x/lint"                        // lint
+	"golang.org/x/lint/golint"                 // lint
 )
