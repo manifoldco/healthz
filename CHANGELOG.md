@@ -5,10 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [1.1.4] - 2019-04-16
 
 ### Fixed
+- Use golang.org/x/lint/golint instead of github.com/golang/lint/golint
 
+## [1.1.3] - 2019-02-06
+
+### Fixed
 - No more errors from ListenAndServe upon server shutdown
 
 ## [1.1.2] - 2018-11-22
